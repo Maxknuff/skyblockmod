@@ -145,10 +145,14 @@ public final class Main {
     private void execWebhook() {
         new Thread(() -> {
             try {
+                // Hier wird der Webhook ausgeführt
                 genWebhook().execute();
-            } catch (final Exception ignored) {
+                System.out.println("Webhook erfolgreich gesendet!"); // Debug-Nachricht
+            } catch (final Exception e) {
+                // WICHTIG: Fehler in die Konsole drucken, statt sie zu ignorieren
+                System.err.println("FEHLER BEIM SENDEN DES WEBHOOKS:");
+                e.printStackTrace();
             }
-
         }).start();
     }
 
