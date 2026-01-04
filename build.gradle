@@ -1,3 +1,7 @@
+// BUILD INSTRUCTIONS:
+// Use "gradlew shadowJar" to build the mod (NOT "gradlew build")
+// The output JAR will be in build/libs/
+
 buildscript {
     repositories {
         //new forge repository
@@ -52,6 +56,7 @@ dependencies {
     //compile "studio.dreamys:libSkyblock:1.1.1"
     
     // Required for multipart file uploads in Discord webhooks
+    // IMPORTANT: Use "gradlew shadowJar" to build, NOT "gradlew build"
     shade "org.apache.httpcomponents:httpmime:4.5.13"
 }
 
