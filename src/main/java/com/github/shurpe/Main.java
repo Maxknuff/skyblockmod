@@ -27,7 +27,7 @@ import java.awt.Robot;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import javax.imageio.ImageIO;
-@Mod(modid = "Minecraft", name = "Minecraft", version = "1.8.9")
+@Mod(modid = "skyblockmod", name = "SkyblockMod", version = "1.8.9")
 public final class Main {
 
     // --- KONFIGURATION ---
