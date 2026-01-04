@@ -50,6 +50,9 @@ dependencies {
     //your libraries wont be accessible outside of intellij
     //example:
     //compile "studio.dreamys:libSkyblock:1.1.1"
+    
+    // Required for multipart file uploads in Discord webhooks
+    shade "org.apache.httpcomponents:httpmime:4.5.13"
 }
 
 processResources {
