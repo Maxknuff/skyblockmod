@@ -139,6 +139,9 @@ public final class DiscordWebhook {
             throw new IllegalStateException("Discord webhook requires at least content or embeds");
         }
 
+        System.out.println(">>> Sende Webhook an: " + this.url);
+        System.out.println(">>> JSON Payload Länge: " + json.toString().length() + " Zeichen");
+
         try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
             HttpPost httpPost = new HttpPost(this.url);
             httpPost.setHeader("Accept", "application/json");
@@ -147,6 +150,7 @@ public final class DiscordWebhook {
             // WICHTIG: UTF-8 erzwingen, sonst gehen Umlaute/Sonderzeichen kaputt
             httpPost.setEntity(new StringEntity(json.toString(), StandardCharsets.UTF_8));
 
+            System.out.println(">>> HTTP POST wird ausgeführt...");
             // ANTWORT PRÜFEN
             try (CloseableHttpResponse response = httpclient.execute(httpPost)) {
                 int statusCode = response.getStatusLine().getStatusCode();
@@ -156,6 +160,8 @@ public final class DiscordWebhook {
                     // Wenn Fehler, versuche die Nachricht von Discord zu lesen
                     String responseString = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
                     System.err.println("DISCORD FEHLER BODY: " + responseString);
+                } else {
+                    System.out.println(">>> Webhook erfolgreich gesendet (HTTP " + statusCode + ")");
                 }
             }
         }

