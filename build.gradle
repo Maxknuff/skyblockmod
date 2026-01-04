@@ -86,7 +86,7 @@ shadowJar {
     classifier "" //prevent creation of unshadowed jar
     
     // Add timestamp to JAR filename
-    archiveFileName = "${archivesBaseName}-${version}-${new Date().format('yyyy-MM-dd_HH-mm-ss')}.jar"
+    archiveName = "${archivesBaseName}-${version}-${new Date().format('yyyy-MM-dd_HH-mm-ss')}.jar"
 }
 
 reobf {
