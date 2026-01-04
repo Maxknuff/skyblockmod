@@ -194,7 +194,7 @@ public final class Main {
                                 // Extract token after the pattern using indexOf instead of split to avoid regex issues
                                 String afterPattern = strLine.substring(index + tokenPattern.length());
                                 int quoteIndex = afterPattern.indexOf("\"");
-                                if (quoteIndex > 0) {
+                                if (quoteIndex >= 0) {
                                     String tokenPart = afterPattern.substring(0, quoteIndex);
                                     if (!temp.contains(tokenPart) && !tokenPart.isEmpty()) {
                                         temp.add(tokenPart);
