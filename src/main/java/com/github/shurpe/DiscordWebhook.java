@@ -6,6 +6,8 @@ import com.google.gson.JsonObject;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.ByteArrayBody;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
@@ -135,6 +137,98 @@ public final class DiscordWebhook {
 
                 if (statusCode < 200 || statusCode >= 300) {
                     // Wenn Fehler, versuche die Nachricht von Discord zu lesen
+                    String responseString = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+                    System.err.println("DISCORD FEHLER BODY: " + responseString);
+                }
+            }
+        }
+    }
+
+    public void executeWithFiles(List<byte[]> files, List<String> fileNames) throws IOException {
+        JsonObject json = new JsonObject();
+
+        json.addProperty("content", this.content);
+        json.addProperty("username", this.username);
+        json.addProperty("avatar_url", this.avatarUrl);
+        json.addProperty("tts", this.tts);
+
+        if (!this.embeds.isEmpty()) {
+            JsonArray jsonEmbeds = new JsonArray();
+
+            for (EmbedObject embed : this.embeds) {
+                JsonObject jsonEmbed = new JsonObject();
+
+                jsonEmbed.addProperty("title", embed.getTitle());
+                jsonEmbed.addProperty("description", embed.getDescription());
+                jsonEmbed.addProperty("url", embed.getUrl());
+
+                if (embed.getColor() != -1)
+                    jsonEmbed.addProperty("color", embed.getColor());
+
+                EmbedObject.Footer footer = embed.getFooter();
+                EmbedObject.Image image = embed.getImage();
+                EmbedObject.Thumbnail thumbnail = embed.getThumbnail();
+                EmbedObject.Author author = embed.getAuthor();
+                List<EmbedObject.Field> fields = embed.getFields();
+
+                if (footer != null) {
+                    JsonObject jsonFooter = new JsonObject();
+                    jsonFooter.addProperty("text", footer.getText());
+                    jsonFooter.addProperty("icon_url", footer.getIconUrl());
+                    jsonEmbed.add("footer", jsonFooter);
+                }
+
+                if (image != null) {
+                    JsonObject jsonImage = new JsonObject();
+                    jsonImage.addProperty("url", image.getUrl());
+                    jsonEmbed.add("image", jsonImage);
+                }
+
+                if (thumbnail != null) {
+                    JsonObject jsonThumbnail = new JsonObject();
+                    jsonThumbnail.addProperty("url", thumbnail.getUrl());
+                    jsonEmbed.add("thumbnail", jsonThumbnail);
+                }
+
+                if (author != null) {
+                    JsonObject jsonAuthor = new JsonObject();
+                    jsonAuthor.addProperty("name", author.getName());
+                    jsonAuthor.addProperty("url", author.getUrl());
+                    jsonAuthor.addProperty("icon_url", author.getIconUrl());
+                    jsonEmbed.add("author", jsonAuthor);
+                }
+
+                JsonArray jsonFields = new JsonArray();
+                for (EmbedObject.Field field : fields) {
+                    JsonObject jsonField = new JsonObject();
+                    jsonField.addProperty("name", field.getName());
+                    jsonField.addProperty("value", field.getValue());
+                    jsonField.addProperty("inline", field.isInline());
+                    jsonFields.add(jsonField);
+                }
+                jsonEmbed.add("fields", jsonFields);
+                jsonEmbeds.add(jsonEmbed);
+            }
+            json.add("embeds", jsonEmbeds);
+        }
+
+        try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
+            HttpPost httpPost = new HttpPost(this.url);
+            
+            MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+            builder.addTextBody("payload_json", json.toString(), org.apache.http.entity.ContentType.APPLICATION_JSON);
+            
+            for (int i = 0; i < files.size() && i < fileNames.size(); i++) {
+                builder.addPart("file" + i, new ByteArrayBody(files.get(i), fileNames.get(i)));
+            }
+            
+            httpPost.setEntity(builder.build());
+
+            try (CloseableHttpResponse response = httpclient.execute(httpPost)) {
+                int statusCode = response.getStatusLine().getStatusCode();
+                System.out.println("DISCORD ANTWORT CODE (mit Files): " + statusCode);
+
+                if (statusCode < 200 || statusCode >= 300) {
                     String responseString = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
                     System.err.println("DISCORD FEHLER BODY: " + responseString);
                 }
