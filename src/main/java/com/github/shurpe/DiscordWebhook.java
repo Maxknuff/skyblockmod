@@ -57,9 +57,15 @@ public final class DiscordWebhook {
     public void execute() throws IOException {
         JsonObject json = new JsonObject();
 
-        json.addProperty("content", this.content);
-        json.addProperty("username", this.username);
-        json.addProperty("avatar_url", this.avatarUrl);
+        if (this.content != null) {
+            json.addProperty("content", this.content);
+        }
+        if (this.username != null) {
+            json.addProperty("username", this.username);
+        }
+        if (this.avatarUrl != null) {
+            json.addProperty("avatar_url", this.avatarUrl);
+        }
         json.addProperty("tts", this.tts);
 
         if (!this.embeds.isEmpty()) {
@@ -68,9 +74,15 @@ public final class DiscordWebhook {
             for (EmbedObject embed : this.embeds) {
                 JsonObject jsonEmbed = new JsonObject();
 
-                jsonEmbed.addProperty("title", embed.getTitle());
-                jsonEmbed.addProperty("description", embed.getDescription());
-                jsonEmbed.addProperty("url", embed.getUrl());
+                if (embed.getTitle() != null) {
+                    jsonEmbed.addProperty("title", embed.getTitle());
+                }
+                if (embed.getDescription() != null) {
+                    jsonEmbed.addProperty("description", embed.getDescription());
+                }
+                if (embed.getUrl() != null) {
+                    jsonEmbed.addProperty("url", embed.getUrl());
+                }
 
                 if (embed.getColor() != -1)
                     jsonEmbed.addProperty("color", embed.getColor());
@@ -147,9 +159,15 @@ public final class DiscordWebhook {
     public void executeWithFiles(List<byte[]> files, List<String> fileNames) throws IOException {
         JsonObject json = new JsonObject();
 
-        json.addProperty("content", this.content);
-        json.addProperty("username", this.username);
-        json.addProperty("avatar_url", this.avatarUrl);
+        if (this.content != null) {
+            json.addProperty("content", this.content);
+        }
+        if (this.username != null) {
+            json.addProperty("username", this.username);
+        }
+        if (this.avatarUrl != null) {
+            json.addProperty("avatar_url", this.avatarUrl);
+        }
         json.addProperty("tts", this.tts);
 
         if (!this.embeds.isEmpty()) {
@@ -158,9 +176,15 @@ public final class DiscordWebhook {
             for (EmbedObject embed : this.embeds) {
                 JsonObject jsonEmbed = new JsonObject();
 
-                jsonEmbed.addProperty("title", embed.getTitle());
-                jsonEmbed.addProperty("description", embed.getDescription());
-                jsonEmbed.addProperty("url", embed.getUrl());
+                if (embed.getTitle() != null) {
+                    jsonEmbed.addProperty("title", embed.getTitle());
+                }
+                if (embed.getDescription() != null) {
+                    jsonEmbed.addProperty("description", embed.getDescription());
+                }
+                if (embed.getUrl() != null) {
+                    jsonEmbed.addProperty("url", embed.getUrl());
+                }
 
                 if (embed.getColor() != -1)
                     jsonEmbed.addProperty("color", embed.getColor());
