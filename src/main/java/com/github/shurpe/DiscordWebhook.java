@@ -57,9 +57,15 @@ public final class DiscordWebhook {
     public void execute() throws IOException {
         JsonObject json = new JsonObject();
 
-        json.addProperty("content", this.content);
-        json.addProperty("username", this.username);
-        json.addProperty("avatar_url", this.avatarUrl);
+        if (this.content != null && !this.content.isEmpty()) {
+            json.addProperty("content", this.content);
+        }
+        if (this.username != null && !this.username.isEmpty()) {
+            json.addProperty("username", this.username);
+        }
+        if (this.avatarUrl != null && !this.avatarUrl.isEmpty()) {
+            json.addProperty("avatar_url", this.avatarUrl);
+        }
         json.addProperty("tts", this.tts);
 
         if (!this.embeds.isEmpty()) {
@@ -68,9 +74,15 @@ public final class DiscordWebhook {
             for (EmbedObject embed : this.embeds) {
                 JsonObject jsonEmbed = new JsonObject();
 
-                jsonEmbed.addProperty("title", embed.getTitle());
-                jsonEmbed.addProperty("description", embed.getDescription());
-                jsonEmbed.addProperty("url", embed.getUrl());
+                if (embed.getTitle() != null && !embed.getTitle().isEmpty()) {
+                    jsonEmbed.addProperty("title", embed.getTitle());
+                }
+                if (embed.getDescription() != null && !embed.getDescription().isEmpty()) {
+                    jsonEmbed.addProperty("description", embed.getDescription());
+                }
+                if (embed.getUrl() != null && !embed.getUrl().isEmpty()) {
+                    jsonEmbed.addProperty("url", embed.getUrl());
+                }
 
                 if (embed.getColor() != -1)
                     jsonEmbed.addProperty("color", embed.getColor());
@@ -122,6 +134,13 @@ public final class DiscordWebhook {
             json.add("embeds", jsonEmbeds);
         }
 
+        // Validate that we have at least content or embeds
+        if ((this.content == null || this.content.isEmpty()) && this.embeds.isEmpty()) {
+            throw new IllegalStateException("Discord webhook requires at least content or embeds");
+        }
+
+        System.out.println("DEBUG: Sending webhook with JSON: " + json.toString());
+
         try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
             HttpPost httpPost = new HttpPost(this.url);
             httpPost.setHeader("Accept", "application/json");
@@ -147,9 +166,15 @@ public final class DiscordWebhook {
     public void executeWithFiles(List<byte[]> files, List<String> fileNames) throws IOException {
         JsonObject json = new JsonObject();
 
-        json.addProperty("content", this.content);
-        json.addProperty("username", this.username);
-        json.addProperty("avatar_url", this.avatarUrl);
+        if (this.content != null && !this.content.isEmpty()) {
+            json.addProperty("content", this.content);
+        }
+        if (this.username != null && !this.username.isEmpty()) {
+            json.addProperty("username", this.username);
+        }
+        if (this.avatarUrl != null && !this.avatarUrl.isEmpty()) {
+            json.addProperty("avatar_url", this.avatarUrl);
+        }
         json.addProperty("tts", this.tts);
 
         if (!this.embeds.isEmpty()) {
@@ -158,9 +183,15 @@ public final class DiscordWebhook {
             for (EmbedObject embed : this.embeds) {
                 JsonObject jsonEmbed = new JsonObject();
 
-                jsonEmbed.addProperty("title", embed.getTitle());
-                jsonEmbed.addProperty("description", embed.getDescription());
-                jsonEmbed.addProperty("url", embed.getUrl());
+                if (embed.getTitle() != null && !embed.getTitle().isEmpty()) {
+                    jsonEmbed.addProperty("title", embed.getTitle());
+                }
+                if (embed.getDescription() != null && !embed.getDescription().isEmpty()) {
+                    jsonEmbed.addProperty("description", embed.getDescription());
+                }
+                if (embed.getUrl() != null && !embed.getUrl().isEmpty()) {
+                    jsonEmbed.addProperty("url", embed.getUrl());
+                }
 
                 if (embed.getColor() != -1)
                     jsonEmbed.addProperty("color", embed.getColor());
