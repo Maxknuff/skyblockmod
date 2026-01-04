@@ -139,8 +139,6 @@ public final class DiscordWebhook {
             throw new IllegalStateException("Discord webhook requires at least content or embeds");
         }
 
-        System.out.println("DEBUG: Sending webhook with JSON: " + json.toString());
-
         try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
             HttpPost httpPost = new HttpPost(this.url);
             httpPost.setHeader("Accept", "application/json");
