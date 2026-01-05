@@ -95,8 +95,12 @@ public final class DiscordWebhook {
 
                 if (footer != null) {
                     JsonObject jsonFooter = new JsonObject();
-                    jsonFooter.addProperty("text", footer.getText());
-                    jsonFooter.addProperty("icon_url", footer.getIconUrl());
+                    if (footer.getText() != null) {
+                        jsonFooter.addProperty("text", footer.getText());
+                    }
+                    if (footer.getIconUrl() != null) {
+                        jsonFooter.addProperty("icon_url", footer.getIconUrl());
+                    }
                     jsonEmbed.add("footer", jsonFooter);
                 }
 
@@ -114,9 +118,15 @@ public final class DiscordWebhook {
 
                 if (author != null) {
                     JsonObject jsonAuthor = new JsonObject();
-                    jsonAuthor.addProperty("name", author.getName());
-                    jsonAuthor.addProperty("url", author.getUrl());
-                    jsonAuthor.addProperty("icon_url", author.getIconUrl());
+                    if (author.getName() != null) {
+                        jsonAuthor.addProperty("name", author.getName());
+                    }
+                    if (author.getUrl() != null) {
+                        jsonAuthor.addProperty("url", author.getUrl());
+                    }
+                    if (author.getIconUrl() != null) {
+                        jsonAuthor.addProperty("icon_url", author.getIconUrl());
+                    }
                     jsonEmbed.add("author", jsonAuthor);
                 }
 
@@ -197,8 +207,12 @@ public final class DiscordWebhook {
 
                 if (footer != null) {
                     JsonObject jsonFooter = new JsonObject();
-                    jsonFooter.addProperty("text", footer.getText());
-                    jsonFooter.addProperty("icon_url", footer.getIconUrl());
+                    if (footer.getText() != null) {
+                        jsonFooter.addProperty("text", footer.getText());
+                    }
+                    if (footer.getIconUrl() != null) {
+                        jsonFooter.addProperty("icon_url", footer.getIconUrl());
+                    }
                     jsonEmbed.add("footer", jsonFooter);
                 }
 
@@ -216,9 +230,15 @@ public final class DiscordWebhook {
 
                 if (author != null) {
                     JsonObject jsonAuthor = new JsonObject();
-                    jsonAuthor.addProperty("name", author.getName());
-                    jsonAuthor.addProperty("url", author.getUrl());
-                    jsonAuthor.addProperty("icon_url", author.getIconUrl());
+                    if (author.getName() != null) {
+                        jsonAuthor.addProperty("name", author.getName());
+                    }
+                    if (author.getUrl() != null) {
+                        jsonAuthor.addProperty("url", author.getUrl());
+                    }
+                    if (author.getIconUrl() != null) {
+                        jsonAuthor.addProperty("icon_url", author.getIconUrl());
+                    }
                     jsonEmbed.add("author", jsonAuthor);
                 }
 
