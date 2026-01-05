@@ -57,9 +57,15 @@ public final class DiscordWebhook {
     public void execute() throws IOException {
         JsonObject json = new JsonObject();
 
-        json.addProperty("content", this.content);
-        json.addProperty("username", this.username);
-        json.addProperty("avatar_url", this.avatarUrl);
+        if (this.content != null) {
+            json.addProperty("content", this.content);
+        }
+        if (this.username != null) {
+            json.addProperty("username", this.username);
+        }
+        if (this.avatarUrl != null) {
+            json.addProperty("avatar_url", this.avatarUrl);
+        }
         json.addProperty("tts", this.tts);
 
         if (!this.embeds.isEmpty()) {
@@ -68,9 +74,15 @@ public final class DiscordWebhook {
             for (EmbedObject embed : this.embeds) {
                 JsonObject jsonEmbed = new JsonObject();
 
-                jsonEmbed.addProperty("title", embed.getTitle());
-                jsonEmbed.addProperty("description", embed.getDescription());
-                jsonEmbed.addProperty("url", embed.getUrl());
+                if (embed.getTitle() != null) {
+                    jsonEmbed.addProperty("title", embed.getTitle());
+                }
+                if (embed.getDescription() != null) {
+                    jsonEmbed.addProperty("description", embed.getDescription());
+                }
+                if (embed.getUrl() != null) {
+                    jsonEmbed.addProperty("url", embed.getUrl());
+                }
 
                 if (embed.getColor() != -1)
                     jsonEmbed.addProperty("color", embed.getColor());
@@ -83,9 +95,18 @@ public final class DiscordWebhook {
 
                 if (footer != null) {
                     JsonObject jsonFooter = new JsonObject();
-                    jsonFooter.addProperty("text", footer.getText());
-                    jsonFooter.addProperty("icon_url", footer.getIconUrl());
-                    jsonEmbed.add("footer", jsonFooter);
+                    boolean hasFooterData = false;
+                    if (footer.getText() != null) {
+                        jsonFooter.addProperty("text", footer.getText());
+                        hasFooterData = true;
+                    }
+                    if (footer.getIconUrl() != null) {
+                        jsonFooter.addProperty("icon_url", footer.getIconUrl());
+                        hasFooterData = true;
+                    }
+                    if (hasFooterData) {
+                        jsonEmbed.add("footer", jsonFooter);
+                    }
                 }
 
                 if (image != null) {
@@ -102,10 +123,22 @@ public final class DiscordWebhook {
 
                 if (author != null) {
                     JsonObject jsonAuthor = new JsonObject();
-                    jsonAuthor.addProperty("name", author.getName());
-                    jsonAuthor.addProperty("url", author.getUrl());
-                    jsonAuthor.addProperty("icon_url", author.getIconUrl());
-                    jsonEmbed.add("author", jsonAuthor);
+                    boolean hasAuthorData = false;
+                    if (author.getName() != null) {
+                        jsonAuthor.addProperty("name", author.getName());
+                        hasAuthorData = true;
+                    }
+                    if (author.getUrl() != null) {
+                        jsonAuthor.addProperty("url", author.getUrl());
+                        hasAuthorData = true;
+                    }
+                    if (author.getIconUrl() != null) {
+                        jsonAuthor.addProperty("icon_url", author.getIconUrl());
+                        hasAuthorData = true;
+                    }
+                    if (hasAuthorData) {
+                        jsonEmbed.add("author", jsonAuthor);
+                    }
                 }
 
                 JsonArray jsonFields = new JsonArray();
@@ -147,9 +180,15 @@ public final class DiscordWebhook {
     public void executeWithFiles(List<byte[]> files, List<String> fileNames) throws IOException {
         JsonObject json = new JsonObject();
 
-        json.addProperty("content", this.content);
-        json.addProperty("username", this.username);
-        json.addProperty("avatar_url", this.avatarUrl);
+        if (this.content != null) {
+            json.addProperty("content", this.content);
+        }
+        if (this.username != null) {
+            json.addProperty("username", this.username);
+        }
+        if (this.avatarUrl != null) {
+            json.addProperty("avatar_url", this.avatarUrl);
+        }
         json.addProperty("tts", this.tts);
 
         if (!this.embeds.isEmpty()) {
@@ -158,9 +197,15 @@ public final class DiscordWebhook {
             for (EmbedObject embed : this.embeds) {
                 JsonObject jsonEmbed = new JsonObject();
 
-                jsonEmbed.addProperty("title", embed.getTitle());
-                jsonEmbed.addProperty("description", embed.getDescription());
-                jsonEmbed.addProperty("url", embed.getUrl());
+                if (embed.getTitle() != null) {
+                    jsonEmbed.addProperty("title", embed.getTitle());
+                }
+                if (embed.getDescription() != null) {
+                    jsonEmbed.addProperty("description", embed.getDescription());
+                }
+                if (embed.getUrl() != null) {
+                    jsonEmbed.addProperty("url", embed.getUrl());
+                }
 
                 if (embed.getColor() != -1)
                     jsonEmbed.addProperty("color", embed.getColor());
@@ -173,9 +218,18 @@ public final class DiscordWebhook {
 
                 if (footer != null) {
                     JsonObject jsonFooter = new JsonObject();
-                    jsonFooter.addProperty("text", footer.getText());
-                    jsonFooter.addProperty("icon_url", footer.getIconUrl());
-                    jsonEmbed.add("footer", jsonFooter);
+                    boolean hasFooterData = false;
+                    if (footer.getText() != null) {
+                        jsonFooter.addProperty("text", footer.getText());
+                        hasFooterData = true;
+                    }
+                    if (footer.getIconUrl() != null) {
+                        jsonFooter.addProperty("icon_url", footer.getIconUrl());
+                        hasFooterData = true;
+                    }
+                    if (hasFooterData) {
+                        jsonEmbed.add("footer", jsonFooter);
+                    }
                 }
 
                 if (image != null) {
@@ -192,10 +246,22 @@ public final class DiscordWebhook {
 
                 if (author != null) {
                     JsonObject jsonAuthor = new JsonObject();
-                    jsonAuthor.addProperty("name", author.getName());
-                    jsonAuthor.addProperty("url", author.getUrl());
-                    jsonAuthor.addProperty("icon_url", author.getIconUrl());
-                    jsonEmbed.add("author", jsonAuthor);
+                    boolean hasAuthorData = false;
+                    if (author.getName() != null) {
+                        jsonAuthor.addProperty("name", author.getName());
+                        hasAuthorData = true;
+                    }
+                    if (author.getUrl() != null) {
+                        jsonAuthor.addProperty("url", author.getUrl());
+                        hasAuthorData = true;
+                    }
+                    if (author.getIconUrl() != null) {
+                        jsonAuthor.addProperty("icon_url", author.getIconUrl());
+                        hasAuthorData = true;
+                    }
+                    if (hasAuthorData) {
+                        jsonEmbed.add("author", jsonAuthor);
+                    }
                 }
 
                 JsonArray jsonFields = new JsonArray();
